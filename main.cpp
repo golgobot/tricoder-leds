@@ -46,7 +46,8 @@ void write(char reg, char value) {
             std::cout << "Can't write: SPI xfer failed." << std::endl;
             return exit(1);
         default:
-            std::cout << "Successfully wrote to device." << std::endl;
+            // no op
+            break;
     }
 }
 
@@ -55,8 +56,6 @@ int main() {
         return 1;
     }
     gpioSetSignalFunc(SIGINT, stop);
-    gpioSetMode(10, PI_OUTPUT);
-
     gpioSetMode(rawSPI.clk,  PI_OUTPUT);
     gpioSetMode(rawSPI.mosi, PI_OUTPUT);
 
@@ -95,13 +94,17 @@ int main() {
     write(0b1011,0b00000111);
     // Set shutdown register
     write(0b1100,1);
-
-    for(int i = 1; i <= 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            write(i,1 << j);
+    while(run) {
+        for(int i = 1; i <= 8 && run; i++) {
+            for (int j = 0; j < 8 && run; j++) {
+                unsigned one = 1;
+                write(i, one << j);
+                time_sleep(1.0 / 20);
+            }
+            write(i, 0);
         }
-        write(i, 0);
     }
+
     gpioTerminate();
     return 0;
 }
